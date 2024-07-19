@@ -1,23 +1,26 @@
 const database = require("../models");
 const configuration = require("../config/config-jwt.js");
-const User = database.user;
+const User = database.User;
 
-var jwt = require("jsonwebtoken");
-var bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
 exports.signup = (req, res) => {
-  console.log("Request : ", req.body)
+  console.log("Request : ", req.body);
   validateRequest(req);
 
   User.create({
     username: req.body.username,
     email: req.body.email,
-    password: bcrypt.hashSync(req.body.password, 8)
+    password: bcrypt.hashSync(req.body.password, 8),
+    role: req.body.role,
   })
-  .then(res.send({ message: "User successfully registered" }))
-  .catch(exception => {
-    res.status(500).send({ message: exception.message });
-  });
+    .then(() => {
+      res.send({ message: "User successfully registered" });
+    })
+    .catch((exception) => {
+      res.status(500).send({ message: exception.message });
+    });
 };
 
 exports.signin = (req, res) => {
@@ -25,45 +28,48 @@ exports.signin = (req, res) => {
 
   User.findOne({
     where: {
-      username: req.body.username
-    }
+      username: req.body.username,
+    },
   })
-  .then(user => {
-    if (!user) {
-      return res.status(404).send({ 
-          message: "User not found" });
-    }
-
-    var passwordIsValid = bcrypt.compareSync(req.body.password, user.password);
-    if (!passwordIsValid) {
-        return res.status(401).send({
-            accessToken: null,
-            message: "Invalid password!"
+    .then((user) => {
+      if (!user) {
+        return res.status(404).send({
+          message: "User not found",
         });
-    }
+      }
 
-    // Set expired token in 10 minutes
-    var token = jwt.sign({ id: user.id }, configuration.secret, {
-      expiresIn: 86400
-    });
+      const passwordIsValid = bcrypt.compareSync(
+        req.body.password,
+        user.password
+      );
+      if (!passwordIsValid) {
+        return res.status(401).send({
+          accessToken: null,
+          message: "Invalid password!",
+        });
+      }
 
-    user.then(
+      // Set expired token in 1 day (24 hours)
+      const token = jwt.sign({ id: user.id }, configuration.secret, {
+        expiresIn: 86400, // 24 hours in seconds
+      });
+
       res.status(200).send({
         id: user.id,
         username: user.username,
         email: user.email,
-        accessToken: token
-      }))
+        accessToken: token,
+      });
     })
-    .catch(err => {
+    .catch((err) => {
       res.status(500).send({ message: err.message });
     });
 };
 
-function validateRequest(req){
+function validateRequest(req) {
   if (!req.body) {
     res.status(400).send({
-      message: "Request can't be empty!"
+      message: "Request can't be empty!",
     });
     return;
   }

@@ -1,31 +1,37 @@
 const jwt = require("jsonwebtoken");
 const configuration = require("../config/config-jwt.js");
 const database = require("../models");
-const User = database.user;
+const User = database.User;
 
-verifyToken = (req, res, next) => {
-    const bearer = req.headers['authorization'];
-    let token = bearer.split(" ")[1];
-
-    if (!token) {
-        return res.status(403).send({
-            message: "Error when get token!"
-        });
-    }
-    
-    jwt.verify(token, configuration.secret, (err, decoded) => {
-        if (err) {
-            return res.status(401).send({
-                message: "User unauthorized!"
-            });
-        }
-        req.userId = decoded.id;
-        next();
+const verifyToken = (req, res, next) => {
+  const bearer = req.headers["authorization"];
+  if (!bearer) {
+    return res.status(403).send({
+      message: "No token provided!",
     });
+  }
+
+  const token = bearer.split(" ")[1];
+
+  if (!token) {
+    return res.status(403).send({
+      message: "Error when get token!",
+    });
+  }
+
+  jwt.verify(token, configuration.secret, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({
+        message: "User unauthorized!",
+      });
+    }
+    req.userId = decoded.id;
+    next();
+  });
 };
 
 const jwtAuth = {
-  verifyToken: verifyToken
+  verifyToken: verifyToken,
 };
 
 module.exports = jwtAuth;

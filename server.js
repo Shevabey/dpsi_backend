@@ -19,10 +19,10 @@ app.use(
 
 app.get("/", (req, res) => {
   res.json({
-    message: "This is a simple CRUD project using node js and postgres sql",
+    message: "Welcome to DPSI Backend",
   });
 });
-require("./app/routes/product-routes")(app);
+require("./app/routes/job-routes")(app);
 require("./app/routes/user-routes")(app);
 
 const PORT = process.env.PORT || 8080;
