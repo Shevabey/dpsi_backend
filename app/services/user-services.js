@@ -1,3 +1,5 @@
+// const jwt = require("jsonwebtoken");
+// const bcrypt = require("bcryptjs");
 const database = require("../models");
 const configuration = require("../config/config-jwt.js");
 const User = database.User;
@@ -63,6 +65,129 @@ exports.signin = (req, res) => {
     })
     .catch((err) => {
       res.status(500).send({ message: err.message });
+    });
+};
+
+exports.me = (req, res) => {
+  const userId = req.userId;
+
+  User.findByPk(userId, {
+    attributes: { exclude: ["password"] },
+  })
+    .then((user) => {
+      if (!user) {
+        return res.status(404).send({ message: "User not found." });
+      }
+      res.status(200).send(user);
+    })
+    .catch((err) => {
+      res.status(500).send({ message: err.message });
+    });
+};
+
+exports.logout = (req, res) => {
+  // Hanya set null pada token, client-side akan bertanggung jawab untuk menghapus token dari penyimpanan
+  req.headers["authorization"] = null;
+  res.status(200).send({ message: "Successfully logged out" });
+};
+
+// Tambahkan fungsi-fungsi baru untuk admin only routes
+exports.findAllUsers = (req, res) => {
+  User.findAll()
+    .then((users) => {
+      res.send(users);
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message: err.message || "Some error occurred while retrieving users.",
+      });
+    });
+};
+
+exports.createUser = (req, res) => {
+  const user = {
+    username: req.body.username,
+    email: req.body.email,
+    password: bcrypt.hashSync(req.body.password, 8),
+    role: req.body.role,
+  };
+
+  User.create(user)
+    .then((data) => {
+      res.send({ message: "User successfully registered" });
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message: err.message || "Some error occurred while creating the User.",
+      });
+    });
+};
+
+exports.findUserById = (req, res) => {
+  const id = req.params.id;
+
+  User.findByPk(id)
+    .then((data) => {
+      if (data) {
+        res.send(data);
+      } else {
+        res.status(404).send({
+          message: `Cannot find User with id=${id}.`,
+        });
+      }
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message: "Error retrieving User with id=" + id,
+      });
+    });
+};
+
+exports.updateUser = (req, res) => {
+  const id = req.params.id;
+
+  User.update(req.body, {
+    where: { id: id },
+  })
+    .then((num) => {
+      if (num == 1) {
+        res.send({
+          message: "User was updated successfully.",
+        });
+      } else {
+        res.send({
+          message: `Cannot update User with id=${id}. Maybe User was not found or req.body is empty!`,
+        });
+      }
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message: "Error updating User with id=" + id,
+      });
+    });
+};
+
+exports.deleteUser = (req, res) => {
+  const id = req.params.id;
+
+  User.destroy({
+    where: { id: id },
+  })
+    .then((num) => {
+      if (num == 1) {
+        res.send({
+          message: "User was deleted successfully!",
+        });
+      } else {
+        res.send({
+          message: `Cannot delete User with id=${id}. Maybe User was not found!`,
+        });
+      }
+    })
+    .catch((err) => {
+      res.status(500).send({
+        message: "Could not delete User with id=" + id,
+      });
     });
 };
 

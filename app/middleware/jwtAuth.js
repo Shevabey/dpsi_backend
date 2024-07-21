@@ -15,7 +15,7 @@ const verifyToken = (req, res, next) => {
 
   if (!token) {
     return res.status(403).send({
-      message: "Error when get token!",
+      message: "No token provided!",
     });
   }
 

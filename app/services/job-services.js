@@ -18,7 +18,7 @@ exports.create = (req, res) => {
 
   Job.create(job)
     .then((data) => {
-      res.send(data);
+      res.send({ msg: "Add job Succesfuly" });
     })
     .catch((err) => {
       res.status(500).send({
@@ -55,7 +55,7 @@ exports.findOne = (req, res) => {
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Error when getting job by id : " + id,
+        message: `Error when getting job by id :  ${id},`,
       });
     });
 };
@@ -80,7 +80,7 @@ exports.update = (req, res) => {
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Error updating job with id : " + id,
+        message: `Error updating job with id : ${id},`,
       });
     });
 };
@@ -105,7 +105,7 @@ exports.delete = (req, res) => {
     })
     .catch((err) => {
       res.status(500).send({
-        message: "Couldn't delete job with id : " + id,
+        message: `Couldn't delete job with id : ${id},`,
       });
     });
 };
