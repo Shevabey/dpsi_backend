@@ -8,6 +8,7 @@ const sequelize = new Sequelize(
   {
     host: configuration.HOST,
     dialect: configuration.dialect,
+    logging: false,
     pool: {
       max: configuration.pool.max,
       min: configuration.pool.min,
@@ -27,5 +28,15 @@ database.UnusedId = require("./unused-id.js")(sequelize, Sequelize);
 // Define associations
 database.User.hasMany(database.Job, { foreignKey: "userId" });
 database.Job.belongsTo(database.User, { foreignKey: "userId" });
+
+// Authenticate and check the connection
+sequelize
+  .authenticate()
+  .then(() => {
+    console.log("Database connected");
+  })
+  .catch((err) => {
+    console.error("Unable to connect to the database:", err);
+  });
 
 module.exports = database;

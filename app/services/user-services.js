@@ -128,7 +128,7 @@ exports.createUser = async (req, res) => {
       role: req.body.role,
     });
 
-    res.status(201).send(user);
+    res.status(201).send({ message: "User successfully registered" });
   } catch (err) {
     res.status(500).send({
       message: err.message || "Some error occurred while creating the User.",
