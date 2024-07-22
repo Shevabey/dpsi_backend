@@ -22,6 +22,7 @@ database.Sequelize = Sequelize;
 database.sequelize = sequelize;
 database.User = require("./user.js")(sequelize, Sequelize);
 database.Job = require("./job.js")(sequelize, Sequelize);
+database.UnusedId = require("./unused-id.js")(sequelize, Sequelize);
 
 // Define associations
 database.User.hasMany(database.Job, { foreignKey: "userId" });

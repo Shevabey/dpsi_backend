@@ -3,6 +3,7 @@
 const database = require("../models");
 const configuration = require("../config/config-jwt.js");
 const User = database.User;
+const UnusedId = database.UnusedId;
 
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
@@ -104,23 +105,35 @@ exports.findAllUsers = (req, res) => {
     });
 };
 
-exports.createUser = (req, res) => {
-  const user = {
-    username: req.body.username,
-    email: req.body.email,
-    password: bcrypt.hashSync(req.body.password, 8),
-    role: req.body.role,
-  };
+exports.createUser = async (req, res) => {
+  try {
+    // Cek ID yang kosong terlebih dahulu
+    const unusedId = await UnusedId.findOne({ where: { entityType: "user" } });
 
-  User.create(user)
-    .then((data) => {
-      res.send({ message: "User successfully registered" });
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: err.message || "Some error occurred while creating the User.",
-      });
+    let newUserId;
+    if (unusedId) {
+      newUserId = unusedId.entityId;
+      await UnusedId.destroy({ where: { id: unusedId.id } });
+    } else {
+      // Jika tidak ada ID yang kosong, buat ID baru
+      const lastUser = await User.findOne({ order: [["id", "DESC"]] });
+      newUserId = lastUser ? lastUser.id + 1 : 1;
+    }
+
+    const user = await User.create({
+      id: newUserId,
+      username: req.body.username,
+      email: req.body.email,
+      password: bcrypt.hashSync(req.body.password, 8),
+      role: req.body.role,
     });
+
+    res.status(201).send(user);
+  } catch (err) {
+    res.status(500).send({
+      message: err.message || "Some error occurred while creating the User.",
+    });
+  }
 };
 
 exports.findUserById = (req, res) => {
@@ -167,28 +180,22 @@ exports.updateUser = (req, res) => {
     });
 };
 
-exports.deleteUser = (req, res) => {
+exports.deleteUser = async (req, res) => {
   const id = req.params.id;
 
-  User.destroy({
-    where: { id: id },
-  })
-    .then((num) => {
-      if (num == 1) {
-        res.send({
-          message: "User was deleted successfully!",
-        });
-      } else {
-        res.send({
-          message: `Cannot delete User with id=${id}. Maybe User was not found!`,
-        });
-      }
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: "Could not delete User with id=" + id,
+  try {
+    const num = await User.destroy({ where: { id: id } });
+    if (num == 1) {
+      await UnusedId.create({ entityId: id, entityType: "user" });
+      res.send({ message: "User was deleted successfully!" });
+    } else {
+      res.send({
+        message: `Cannot delete User with id=${id}. Maybe User was not found!`,
       });
-    });
+    }
+  } catch (err) {
+    res.status(500).send({ message: "Could not delete User with id=" + id });
+  }
 };
 
 function validateRequest(req) {

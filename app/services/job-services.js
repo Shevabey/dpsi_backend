@@ -1,30 +1,40 @@
 const db = require("../models/index");
 const Job = db.Job;
+const UnusedId = db.UnusedId;
 // const Op = db.Sequelize.Op;
 
 // Add new job
-exports.create = (req, res) => {
-  console.log("Request : ", req.body);
-  validateRequest(req);
+exports.create = async (req, res) => {
+  try {
+    // Cek ID yang kosong terlebih dahulu
+    const unusedId = await UnusedId.findOne({ where: { entityType: "job" } });
 
-  const job = {
-    title: req.body.title,
-    description: req.body.description,
-    requirements: req.body.requirements,
-    contactInfo: req.body.contactInfo,
-    isDeleted: req.body.isDeleted ? req.body.isDeleted : false,
-    userId: req.userId, // Assuming the authenticated user is creating the job
-  };
+    let newJobId;
+    if (unusedId) {
+      newJobId = unusedId.entityId;
+      await UnusedId.destroy({ where: { id: unusedId.id } });
+    } else {
+      // Jika tidak ada ID yang kosong, buat ID baru
+      const lastJob = await Job.findOne({ order: [["id", "DESC"]] });
+      newJobId = lastJob ? lastJob.id + 1 : 1;
+    }
 
-  Job.create(job)
-    .then((data) => {
-      res.send({ msg: "Add job Succesfuly" });
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: err.message || "Error when adding a job!",
-      });
+    const job = await Job.create({
+      id: newJobId,
+      title: req.body.title,
+      description: req.body.description,
+      requirements: req.body.requirements,
+      contactInfo: req.body.contactInfo,
+      isDeleted: req.body.isDeleted ? req.body.isDeleted : false,
+      userId: req.userId,
     });
+
+    res.status(201).send(job);
+  } catch (err) {
+    res
+      .status(500)
+      .send({ message: err.message || "Error when adding a job!" });
+  }
 };
 
 // Find all jobs
@@ -86,28 +96,22 @@ exports.update = (req, res) => {
 };
 
 // Delete job by job id
-exports.delete = (req, res) => {
-  const id = req.params.id; // Mengambil ID dari parameter URL
+exports.delete = async (req, res) => {
+  const id = req.params.id;
 
-  Job.destroy({
-    where: { id: id },
-  })
-    .then((num) => {
-      if (num == 1) {
-        res.send({
-          message: "Job successfully deleted.",
-        });
-      } else {
-        res.send({
-          message: "Delete process failed!",
-        });
-      }
-    })
-    .catch((err) => {
-      res.status(500).send({
-        message: `Couldn't delete job with id : ${id},`,
+  try {
+    const num = await Job.destroy({ where: { id: id } });
+    if (num == 1) {
+      await UnusedId.create({ entityId: id, entityType: "job" });
+      res.send({ message: "Job was deleted successfully!" });
+    } else {
+      res.send({
+        message: `Cannot delete Job with id=${id}. Maybe Job was not found!`,
       });
-    });
+    }
+  } catch (err) {
+    res.status(500).send({ message: "Could not delete Job with id=" + id });
+  }
 };
 function validateRequest(req) {
   if (!req.body) {
