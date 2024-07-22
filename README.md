@@ -13,11 +13,47 @@ https://documenter.getpostman.com/view/29351832/2sA3kVjgLy
 
 
 ### How to run this project
-- npm install
-- npm start
-- the application will running on port 8080
-- Admin => "username": "Bey", "Password": "1234"
-- Try to do a user registration, then sign in
+Clone repositorie
+```bash
+git clone https://github.com/Shevabey/dpsi_backend.git
+
+```
+Change directory
+```bash
+cd dpsi_backend
+
+```
+Instal dependecies
+```bash
+npm install
+
+```
+Start Project
+```bash
+npm start
+
+```
+Port development
+```bash
+http://localhost:8080/
+
+```
+Port Productions
+```bash
+dpsibackend-production.up.railway.app/
+
+```
+Login Account Admin for acces all endpoind
+```bash
+{
+  "username": "Bey",
+  "Password": "1234"
+}
+
+```
+- the application will running on port 8080 and dpsibackend-production.up.railway.app
+
+### API resource testing
 - Try to register
 ![image](https://github.com/user-attachments/assets/c859d8b6-9c44-4d6f-9840-d48fe2207322)
 
