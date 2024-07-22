@@ -33,7 +33,7 @@ database.Job.belongsTo(database.User, { foreignKey: "userId" });
 sequelize
   .authenticate()
   .then(() => {
-    console.log("Database connected");
+    console.log("Database connected...");
   })
   .catch((err) => {
     console.error("Unable to connect to the database:", err);
